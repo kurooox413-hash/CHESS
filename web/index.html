@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Coach — Post-Game Analysis &amp; Study</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>♞ Chess Coach</h1>
+  <span class="tag">Post-game analysis &amp; study — never use during live games</span>
+</header>
+<div class="banner">
+  ⚠️ <strong>Fair play:</strong> This tool is for reviewing <em>finished</em> games, puzzles, and study only.
+  Chess.com prohibits engines or any outside help during ongoing games. Using analysis tools mid-game can get your account closed.
+</div>
+<main>
+  <section class="board-col">
+    <div class="board-wrap">
+      <div class="evalbar"><div id="evalFill"></div><span id="evalText">0.0</span></div>
+      <div id="board" class="board"></div>
+      <svg id="arrows" class="arrows" viewBox="0 0 800 800"></svg>
+    </div>
+    <div class="controls">
+      <button id="btnNew">New game</button>
+      <button id="btnFlip">Flip</button>
+      <button id="btnUndo">Undo</button>
+      <button id="btnStart">⏮</button>
+      <button id="btnPrev">◀</button>
+      <button id="btnNext">▶</button>
+      <button id="btnEnd">⏭</button>
+      <button id="btnAnalyze" class="primary">Analyze</button>
+      <button id="btnReview">Review game</button>
+      <label>Depth
+        <select id="depthSel"><option>1</option><option>2</option><option selected>3</option><option>4</option></select>
+      </label>
+      <span id="status" class="status"></span>
+    </div>
+    <div class="io">
+      <input id="fenInput" placeholder="Paste FEN here…">
+      <button id="btnFen">Load FEN</button>
+      <button id="btnCopyFen">Copy FEN</button>
+    </div>
+    <div class="io">
+      <textarea id="pgnInput" rows="3" placeholder="Paste PGN here to review a finished game…"></textarea>
+      <button id="btnPgn">Load PGN</button>
+      <button id="btnExportPgn">Export PGN</button>
+    </div>
+    <div id="moves" class="moves"></div>
+    <div id="opening" class="opening"></div>
+    <div id="topMoves" class="topmoves"></div>
+    <div id="reviewInfo" class="reviewinfo"></div>
+  </section>
+
+  <aside class="side">
+    <section class="card">
+      <h2>🤖 AI Coach</h2>
+      <div id="chatLog" class="chatlog"></div>
+      <div class="chatrow">
+        <input id="chatInput" placeholder="Ask about this position… (Enter to send)">
+        <button id="btnSend">Send</button>
+      </div>
+      <details>
+        <summary>⚙️ Coach settings</summary>
+        <label>Provider
+          <select id="setProvider">
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="custom">Custom (OpenAI-compatible)</option>
+          </select>
+        </label>
+        <label>Model
+          <input id="setModel" placeholder="gpt-4o-mini">
+        </label>
+        <label>API key <small>(stored only in your browser)</small>
+          <input id="setKey" type="password" placeholder="sk-…">
+        </label>
+        <label>Base URL <small>(custom only)</small>
+          <input id="setBase" placeholder="https://your-endpoint/v1">
+        </label>
+        <label>Temperature <span id="tempVal">0.7</span>
+          <input id="setTemp" type="range" min="0" max="2" step="0.1" value="0.7">
+        </label>
+        <label>System prompt
+          <textarea id="setSys" rows="3">You are a friendly chess coach. Explain ideas simply: plans, tactics, pawn structure, and what to learn from this position. Never claim to see the future. Keep answers concise.</textarea>
+        </label>
+        <button id="btnSaveSettings">Save settings</button>
+        <span id="settingsMsg"></span>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2>📥 Import from Chess.com (official public API)</h2>
+      <p class="small">Uses the read-only Published Data API — profiles, stats, and finished-game PGN archives only.</p>
+      <div class="chatrow">
+        <input id="ccUser" placeholder="Chess.com username">
+        <button id="btnCcLoad">Load latest game</button>
+      </div>
+      <div id="ccInfo" class="small"></div>
+    </section>
+
+    <section class="card">
+      <h2>📖 About</h2>
+      <p class="small">Built-in engine (alpha-beta search) runs fully in your browser — no key needed.
+      The AI Coach is optional: add your own API key in settings. See <code>RESEARCH.md</code> in the repo for sources.</p>
+    </section>
+  </aside>
+</main>
+<div id="promoModal" class="modal hidden">
+  <div class="modal-box">
+    <p>Promote to:</p>
+    <button data-p="q">♛ Queen</button><button data-p="r">♜ Rook</button>
+    <button data-p="b">♝ Bishop</button><button data-p="n">♞ Knight</button>
+  </div>
+</div>
+<script src="core/chess-core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

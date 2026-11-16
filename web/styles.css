@@ -1,0 +1,64 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #161512; color: #e8e6e3; }
+header { display: flex; align-items: baseline; gap: 12px; padding: 14px 20px 4px; }
+header h1 { margin: 0; font-size: 26px; }
+.tag { color: #a8a29e; font-size: 13px; }
+.banner { margin: 8px 20px; padding: 10px 14px; background: #3a2b12; border: 1px solid #a16207; border-radius: 8px; font-size: 14px; }
+main { display: flex; gap: 20px; padding: 10px 20px 30px; flex-wrap: wrap; }
+.board-col { flex: 0 1 560px; min-width: 320px; }
+.board-wrap { display: flex; gap: 10px; align-items: stretch; }
+.evalbar { width: 22px; background: #44403c; border-radius: 6px; position: relative; overflow: hidden; }
+#evalFill { position: absolute; bottom: 0; left: 0; right: 0; background: #fafaf9; height: 50%; transition: height .3s; }
+#evalText { position: absolute; top: 4px; left: 0; right: 0; text-align: center; font-size: 10px; color: #fff; mix-blend-mode: difference; }
+.board { position: relative; flex: 1; aspect-ratio: 1; display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); border-radius: 8px; overflow: hidden; user-select: none; }
+.sq { display: flex; align-items: center; justify-content: center; font-size: clamp(28px, 6vw, 52px); cursor: pointer; position: relative; }
+.sq.light { background: #f0d9b5; } .sq.dark { background: #b58863; }
+.sq.sel { outline: 4px solid #f6f669; outline-offset: -4px; }
+.sq.last { outline: 4px solid rgba(246,246,105,.55); outline-offset: -4px; }
+.sq.check { background: #e06666 !important; }
+.sq .dot { position: absolute; width: 28%; height: 28%; border-radius: 50%; background: rgba(20,85,30,.45); }
+.sq .ring { position: absolute; inset: 4%; border-radius: 50%; border: 5px solid rgba(20,85,30,.45); }
+.arrows { position: absolute; inset: 0; pointer-events: none; }
+.board-wrap { position: relative; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+button { background: #3f3f46; color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 14px; }
+button:hover { background: #52525b; }
+button.primary { background: #15803d; }
+input, select, textarea { background: #292524; color: #e8e6e3; border: 1px solid #57534e; border-radius: 8px; padding: 8px; font-size: 14px; width: 100%; }
+.io { display: flex; gap: 8px; margin: 8px 0; align-items: flex-start; }
+.io textarea { flex: 1; }
+.io input { flex: 1; }
+.io button { white-space: nowrap; }
+.moves { background: #292524; border-radius: 8px; padding: 10px; min-height: 44px; font-size: 14px; line-height: 1.7; }
+.opening { margin-top: 8px; color: #fbbf24; font-weight: 600; }
+.topmoves { margin-top: 8px; font-size: 14px; }
+.topmoves div { padding: 3px 0; border-bottom: 1px solid #44403c; }
+.status { font-weight: 600; color: #fbbf24; }
+.side { flex: 1; min-width: 300px; max-width: 520px; }
+.card { background: #292524; border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+.card h2 { margin: 0 0 10px; font-size: 17px; }
+.chatlog { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.msg { padding: 8px 10px; border-radius: 10px; font-size: 14px; white-space: pre-wrap; }
+.msg.user { background: #1d4ed8; align-self: flex-end; max-width: 90%; }
+.msg.ai { background: #44403c; align-self: flex-start; max-width: 90%; }
+.chatrow { display: flex; gap: 8px; }
+.chatrow input { flex: 1; }
+details { margin-top: 12px; }
+details summary { cursor: pointer; font-weight: 600; }
+details label { display: block; margin: 10px 0; font-size: 13px; }
+.small { font-size: 13px; color: #a8a29e; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; }
+.modal.hidden { display: none; }
+.modal-box { background: #292524; padding: 20px; border-radius: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+button.primary { background:#15803d; }
+button.primary:hover { background:#166534; }
+button:disabled { opacity:.5; cursor:default; }
+.moves { max-height: 130px; overflow-y: auto; }
+.mv { cursor: pointer; padding: 1px 3px; border-radius: 4px; }
+.mv:hover { background:#3f3f46; }
+.mv.cur { background:#15803d; }
+.mv.future { color:#78716c; }
+.mv sup { color:#f87171; font-weight: 700; }
+.reviewinfo { margin-top: 10px; font-size: 13px; background:#292524; border-radius:8px; padding:8px 10px; }
+.reviewinfo:empty { display:none; }
