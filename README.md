@@ -16,16 +16,41 @@ Chess.com games through Chess.com's official public API.
 
 | Feature | Details |
 | --- | --- |
-| Full rules engine | Legal moves, castling, en passant, promotion, check/checkmate/stalemate, 50-move and insufficient-material draws, SAN + PGN import/export, FEN |
-| Built-in analysis | Negamax engine with alpha-beta, quiescence search and move ordering. Depth 1–4, eval bar, top-5 moves with scores, best-move arrow. No API key, no network. |
-| Game review | Steps through a whole game and flags **blunders / mistakes / inaccuracies** by centipawn loss, with the move that was better |
-| Board workflow | Click to move, legal-move dots, last-move and check highlights, flip, undo, move list with clickable plies, ← → ↑ ↓ keyboard navigation |
-| Chess.com import | Username → latest finished game loaded from the official public API (read-only, no key) |
-| AI coach | Chat about the current position. OpenAI, Anthropic, or any OpenAI-compatible endpoint; your key stays in your browser. Model, temperature, base URL and system prompt are all editable. |
-| Fair-play guard | Extension notices when a live board is open and disables analysis |
+| Full rules engine | Castling, en passant, promotion, check/checkmate/stalemate, 50-move, threefold repetition, insufficient material. Verified against **perft to depth 4** on six standard test positions. |
+| Real search | Negamax + alpha-beta, quiescence, principal-variation search, killer moves, transposition table, aspiration at the root, mate-distance scoring, time limits. ~20k nodes/sec, depth 4 in ~200 ms. |
+| Evaluation | Material + piece-square tables + bishop pair, doubled/isolated/passed pawns, rooks on open files, king shield, tempo — **every weight is a setting**. |
+| Game review | Streams through a whole game computing centipawn loss and win-probability accuracy per move, classifies blunders/mistakes/inaccuracies, charts the accuracy curve, and names the better move. |
+| 156 settings | Board, engine, evaluation weights, review thresholds, coach, import, interface, accessibility, fair play, data. Searchable, tiered (basic/advanced/experimental), with 6 presets, export/import. Every one is wired — see below. |
+| AI coach | Position-aware chat with engine eval, move history, opening name and your review marks in the prompt. OpenAI, Anthropic, Ollama, LM Studio or any compatible endpoint. |
+| Chess.com import | Browse your last three months of finished games with filters, then load one or auto-review it. |
+| Fair-play guard | Locks analysis while a live board is open, in the extension. |
 
 Everything runs locally except two optional network calls: the Chess.com import and your own
 LLM request.
+
+### Settings that actually do something
+
+Nothing in the settings panel is decorative. A few examples:
+
+| Setting | What it changes in the code |
+| --- | --- |
+| `engineDepth`, `engineTimeMs`, `engineMultipv` | Search depth, wall-clock cap, number of reported lines |
+| `wMatPawn` … `wTempo` | Feeds `evaluate()` directly — change knight value and the engine plays differently |
+| `engineRandomness`, `engineBlunderChance` | Adds eval jitter and occasional worse-move choice at the root |
+| `blunderCp`, `mistakeCp`, `inaccuracyCp` | Review classification thresholds |
+| `reviewDepth`, `reviewTimePerMove` | Per-move search budget for the review |
+| `boardTheme`, `pieceSize`, `borderRadius`, `fontScale` | CSS custom properties on `:root` |
+| `showBestArrow`, `arrowStyle`, `arrowOpacity` | Arrow geometry in the SVG overlay |
+| `engineMultipv` | Truncates the rendered engine line list |
+| `fairPlayGuard`, `warnOnLiveTab` | Enables the live-game lockout |
+| `sessionOnlyKey` | Keeps the API key out of persistent storage |
+| `importMaxGames`, `importTimeClass`, `importRatedOnly` | Filters applied to the Chess.com archive query |
+| `persona`, `verbosity`, `language`, `contextMoves` | Composed into the system prompt and the per-question context |
+
+Tier "experimental" settings are grouped last and labelled, because they're either
+untested at scale or genuinely questionable (e.g. `engineNullMove`, which is not
+implemented and would silently do nothing — read the table in `ROADMAP.md` for the
+honest list of soft spots).
 
 ---
 
@@ -133,31 +158,33 @@ provider blocks browser origins, use the Custom option with a small proxy, or us
 ## Layout
 
 ```
-web/                 standalone app
-  index.html
-  styles.css
-  app.js             UI + review + coach + import (shared with the extension)
-  core/chess-core.js rules, FEN/PGN, engine, opening book
-extension/           Chrome MV3 side panel
-  manifest.json
-  background.js      service worker, opens the panel on icon click
-  guard.js           fair-play guard on chess.com (path check only, reads no board data)
-  index.html         panel UI
-  panel-extra.js     live-game notice + button lockout
-  app.js, styles.css, core/  (copies of web/)
+web/                      standalone app
+  index.html              tabbed shell: Play / Review / Coach / Games / Settings
+  styles.css              themes, density, a11y hooks via CSS custom properties
+  app.js                  all UI behaviour (shared with the extension)
+  settings-schema.js      156 settings as data — the settings UI is generated
+  core/chess-core.js      rules, FEN/SAN/PGN, search, evaluation, review
+extension/                Chrome MV3 side panel
+  manifest.json           minimal permissions, sidePanel
+  background.js           service worker, opens the panel on icon click
+  guard.js                fair-play guard (URL-path check only, no data reads)
+  index.html              panel shell (same app, narrower layout)
+  app.js, styles.css, settings-schema.js, core/   copies of web/
   icons/
 tests/
-  chess-core.test.js 19 engine/rules tests (node)
-  ui.test.js         17 DOM tests (node + jsdom)
-chess-coach-extension.zip   ready-to-load extension build
-RESEARCH.md          sources + reasoning behind the design
+  chess-core.test.js      80 assertions: perft, rules, PGN, search, review, schema
+  ui.test.js              50 assertions: clicks, nav, analysis, review, import, settings
+  extension.test.js       11 assertions: panel boots, manifest stays minimal, guard stays dumb
+chess-coach-extension.zip  ready-to-load extension build (48 KB)
+RESEARCH.md               sources + reasoning behind the design
+ROADMAP.md                ranked list of what to build next, with effort estimates
 ```
 
-`web/` and `extension/` share the same `app.js`, `styles.css` and `core/chess-core.js`. After
-editing one, copy to the other:
+`web/` and `extension/` share `app.js`, `styles.css`, `settings-schema.js` and
+`core/chess-core.js`. After editing one, copy across:
 
 ```bash
-cp web/app.js web/styles.css web/core/chess-core.js extension/ 2>/dev/null
+cp web/app.js web/styles.css web/settings-schema.js extension/
 cp web/core/chess-core.js extension/core/
 ```
 
@@ -170,23 +197,30 @@ cd extension && zip -r ../chess-coach-extension.zip . -x '.*' && cd ..
 ## Tests
 
 ```bash
-node tests/chess-core.test.js   # rules, PGN, engine, opening book
+node tests/chess-core.test.js    # perft, rules, PGN, search, review, settings schema
 npm install jsdom
-node tests/ui.test.js           # board clicks, navigation, review, import, coach
+node tests/ui.test.js            # board, nav, analysis, review, import, live lockout
+node tests/extension.test.js     # panel boots, manifest minimal, guard reads no data
 ```
 
-Both suites pass: 19/19 and 17/17.
+All green: **80 + 50 + 11 = 141 assertions**. The perft suite matches the published
+node counts for startpos (197,281), Kiwipete (97,862), and the four other standard
+positions — that's what caught a castling bug where the king landed on f1 instead of g1.
 
 ## Limits worth knowing
 
-- The bundled engine is a readable, dependency-free implementation — strong enough to find
-  tactics and big swings, not a Stockfish replacement. For serious analysis, run Stockfish
-  locally and paste the PGN / compare lines.
-- Review depth is 2 plies per position, so labels are a heuristic (150+ cp = blunder,
-  70+ = mistake, 30+ = inaccuracy), not a verdict on your chess.
-- Chess.com PGNs with variants (Chess960, Crazyhouse, etc.) won't replay correctly — the core
-  supports standard chess only.
-- Opening book is a small hand-written list of common lines, not an ECO database.
+Written down on purpose — see `ROADMAP.md` for the full table.
+
+- The engine is a readable, dependency-free implementation, not Stockfish. It finds tactics
+  and big swings at depth 4; it will not out-analyse a 3000-rated engine. Bundling
+  Stockfish WASM is the top item on the roadmap.
+- Review accuracy uses our own win-probability formula (Lichess-style sigmoid), not a model
+  calibrated on a large corpus. Treat percentages as relative, not absolute.
+- Chess.com PGNs with variants (Chess960, Crazyhouse) won't replay — standard chess only.
+- Opening book is 50 hand-written lines with ECO tags, not a full ECO database.
+- Some "experimental" settings are placeholders for work not done yet (null-move pruning,
+  late-move reductions). They're labelled rather than hidden so you can see the roadmap in
+  the UI.
 
 ## License
 

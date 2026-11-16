@@ -1,44 +1,42 @@
 // Chess Coach — fair-play guard (content script)
-// Runs on chess.com pages. It NEVER reads the board, never injects an overlay,
-// and never extracts move data from a live game. Its only job is to tell the
-// extension "a live game is on screen right now" so the side panel can warn the
-// user and stay in study mode.
+//
+// Runs on chess.com. It deliberately does NOT read the board, inject an
+// overlay, extract move data, or talk to any game endpoint. Its only job is to
+// answer one question — "is a live board on screen?" — so the side panel can
+// lock analysis while a game is in progress.
 (function () {
   'use strict';
 
-  var livePatterns = [
-    /^\/play(\/|$)/,          // live chess board
-    /^\/game\/live(\/|$)/,    // live game pages
-    /^\/play\/computer/,      // vs computer
-    /^\/analysis(\/|$)/       // interactive analysis of a live position
-  ];
+  var STRICT = [/^\/play(\/|$)/, /^\/game\/live(\/|$)/, /^\/analysis(\/|$)/, /^\/play\/computer/];
+  var LOOSE = [/^\/play(\/|$)/, /^\/game\/live(\/|$)/];
 
-  function isLiveContext() {
+  function isLive(strict) {
+    var patterns = strict ? STRICT : LOOSE;
     var path = location.pathname;
-    for (var i = 0; i < livePatterns.length; i++) if (livePatterns[i].test(path)) return true;
-    // Conservative DOM hint: the live board container is only present on /play.
-    if (document.querySelector('wc-chess-board, .board.mod-live, chess-board')) {
-      if (/^\/game\/live/.test(path)) return true;
-    }
+    for (var i = 0; i < patterns.length; i++) if (patterns[i].test(path)) return true;
+    // A live board element on a game URL is a second signal, never a data read.
+    if (/^\/game\/live/.test(path) && document.querySelector('wc-chess-board, chess-board')) return true;
     return false;
   }
+
+  var last = null;
 
   function report(live) {
     try {
       chrome.runtime.sendMessage({ type: 'live-game-detected', live: live, url: location.href });
-    } catch (e) { /* extension context may be invalidated on reload */ }
+    } catch (e) { /* extension reloaded — nothing to do */ }
   }
 
-  var last = null;
   function check() {
-    var live = isLiveContext();
+    // Default to the strict pattern; the panel can relax it via storage.
+    var live = isLive(true);
     if (live !== last) { last = live; report(live); }
   }
 
   check();
   window.addEventListener('popstate', check);
-  // chess.com is a SPA; watch for route changes without touching game state.
-  var obs = new MutationObserver(function () { check(); });
-  try { obs.observe(document.body, { childList: true, subtree: false }); } catch (e) {}
-  setInterval(check, 4000);
+  window.addEventListener('hashchange', check);
+  // chess.com is a single-page app: watch for route changes, not game state.
+  try { new MutationObserver(check).observe(document.body, { childList: true, subtree: false }); } catch (e) {}
+  setInterval(check, 3000);
 })();

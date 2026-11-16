@@ -1,18 +1,27 @@
 {
   "manifest_version": 3,
-  "name": "Chess Coach — Post-Game Analysis & Study",
-  "version": "1.0.0",
-  "description": "Review finished games with a built-in chess engine and an AI coach. Fair play: disabled during live games.",
+  "name": "Chess Coach \u2014 Post-Game Analysis & Study",
+  "version": "2.0.0",
+  "description": "Review finished games with a real engine, AI coach and Chess.com import. Fair-play guard locks analysis while a live board is open.",
   "minimum_chrome_version": "114",
-  "permissions": ["storage", "sidePanel"],
+  "permissions": [
+    "storage",
+    "sidePanel"
+  ],
   "host_permissions": [
     "https://api.chess.com/*",
     "https://api.openai.com/*",
     "https://api.anthropic.com/*"
   ],
-  "background": { "service_worker": "background.js" },
-  "action": { "default_title": "Open Chess Coach" },
-  "side_panel": { "default_path": "index.html" },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Chess Coach"
+  },
+  "side_panel": {
+    "default_path": "index.html"
+  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -20,8 +29,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*.chess.com/*"],
-      "js": ["guard.js"],
+      "matches": [
+        "*://*.chess.com/*"
+      ],
+      "js": [
+        "guard.js"
+      ],
       "run_at": "document_idle"
     }
   ],
